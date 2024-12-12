@@ -5,23 +5,18 @@ use aide::{
         routing::{get, get_with, post_with},
         ApiRouter, IntoApiResponse,
     },
-    openapi::{Info, OpenApi, Response, Tag},
+    openapi::{OpenApi, Tag},
     redoc::Redoc,
     transform::{TransformOpenApi, TransformOperation},
 };
 use auth::{login_post, logout_post};
-use axum::{http::StatusCode, middleware, response::IntoResponse, Extension, Json, Router};
+use axum::{middleware, response::IntoResponse, Extension, Json, Router};
 use axum_extra::response::Html;
 use sqlx::SqlitePool;
 use tower_http::trace::TraceLayer;
 use tower_sessions::{MemoryStore, SessionManagerLayer};
 
-use crate::{
-    errors::{dto::AppErrorDto, RestError},
-    middleware::auth_middleware,
-    model::repository::Repository,
-    state::AppState,
-};
+use crate::{middleware::auth_middleware, model::repository::Repository, state::AppState};
 
 pub mod auth;
 pub mod health;

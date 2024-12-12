@@ -1,6 +1,5 @@
 use std::env::VarError;
 
-use aide::axum::IntoApiResponse;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
@@ -39,8 +38,6 @@ pub enum RestError {
     Authorization(#[from] AuthError),
     #[error("Internal error: {0}")]
     Internal(String),
-    #[error("OpenApi: {0}")]
-    OpenApi(String),
 }
 
 #[derive(Error, Debug)]
@@ -69,20 +66,20 @@ impl IntoResponse for RestError {
         let (status, error_message) = match self {
             RestError::NotFound => (
                 StatusCode::NOT_FOUND,
-                Json(AppErrorDto::new(&self.to_string())),
+                Json(AppErrorDto::new(&self.to_string()).with_status(StatusCode::NOT_FOUND)),
             ),
             RestError::InvalidInput(_) => (
                 StatusCode::BAD_REQUEST,
-                Json(AppErrorDto::new(&self.to_string())),
+                Json(AppErrorDto::new(&self.to_string()).with_status(StatusCode::BAD_REQUEST)),
             ),
             RestError::Authorization(AuthError::TokenInvalid)
             | RestError::Authorization(AuthError::TokenNotFound) => (
                 StatusCode::FORBIDDEN,
-                Json(AppErrorDto::new(&self.to_string())),
+                Json(AppErrorDto::new(&self.to_string()).with_status(StatusCode::FORBIDDEN)),
             ),
             RestError::Authorization(_) => (
                 StatusCode::UNAUTHORIZED,
-                Json(AppErrorDto::new(&self.to_string())),
+                Json(AppErrorDto::new(&self.to_string()).with_status(StatusCode::UNAUTHORIZED)),
             ),
             RestError::Database(_) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
@@ -92,13 +89,6 @@ impl IntoResponse for RestError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(
                     AppErrorDto::new("Internal server error")
-                        .with_details(json!({ "error": self.to_string() })),
-                ),
-            ),
-            RestError::OpenApi(_) => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(
-                    AppErrorDto::new("OpenApi error")
                         .with_details(json!({ "error": self.to_string() })),
                 ),
             ),

@@ -5,12 +5,7 @@ use axum::{
     Extension, Json,
 };
 
-use crate::{
-    db::repository,
-    errors::{RestError, RestResult},
-    model::{repository::Repository, user::User},
-    state::AppState,
-};
+use crate::{db::repository, errors::RestError, model::user::User, state::AppState};
 
 pub async fn get_all(State(state): State<AppState>) -> impl IntoApiResponse {
     let items = repository::get_all(state.db).await.map_err(|e| {
