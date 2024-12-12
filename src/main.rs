@@ -10,8 +10,14 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod db;
 mod errors;
+mod jwt;
+mod middleware;
+mod model;
 mod router;
 mod state;
+
+#[cfg(test)]
+mod test;
 
 #[tokio::main]
 async fn main() -> Result<(), ApplicationError> {

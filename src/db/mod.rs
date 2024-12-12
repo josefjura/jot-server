@@ -4,6 +4,10 @@ use sqlx::{
 };
 use tracing::info;
 
+pub mod auth;
+pub mod repository;
+pub mod user;
+
 pub async fn create_db_pool(path: &str) -> Result<SqlitePool, sqlx::Error> {
     info!("Setting up database at {}", path);
     let opts = SqliteConnectOptions::new()
