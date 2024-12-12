@@ -44,6 +44,8 @@ pub enum RestError {
 pub enum DbError {
     #[error("Error communicating with database: {0}")]
     Unknown(#[from] sqlx::Error),
+    #[error("Error mapping entity: {0}")]
+    EntityMapping(String),
 }
 
 #[derive(Error, Debug, Clone)]

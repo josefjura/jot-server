@@ -19,9 +19,12 @@ use super::with_auth_middleware;
 
 pub fn repository_routes(app_state: AppState) -> ApiRouter<AppState> {
     let router = ApiRouter::new()
-        .api_route("/", get_with(get_all, get_all_docs))
-        .api_route("/:id", get_with(get_by_id, get_by_id_docs))
-        .api_route("/user", get_with(get_all_by_owner, get_all_by_owner_docs));
+        .api_route("/repository", get_with(get_all, get_all_docs))
+        .api_route("/repository/:id", get_with(get_by_id, get_by_id_docs))
+        .api_route(
+            "/user/repository",
+            get_with(get_all_by_owner, get_all_by_owner_docs),
+        );
 
     with_auth_middleware(router, app_state)
 }

@@ -57,7 +57,7 @@ async fn repository_get_by_owner_ok(db: sqlx::Pool<sqlx::Sqlite>) {
     let token = test::login(&server).await;
 
     let response = server
-        .get("/repository/user")
+        .get("/user/repository")
         .authorization_bearer(token)
         .await;
 

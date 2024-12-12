@@ -15,6 +15,7 @@ mod middleware;
 mod model;
 mod router;
 mod state;
+mod util;
 
 #[cfg(test)]
 mod test;

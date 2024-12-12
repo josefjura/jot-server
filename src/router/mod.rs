@@ -4,6 +4,7 @@ use aide::{axum::ApiRouter, openapi::OpenApi};
 use auth::auth_routes;
 use axum::{middleware, Extension, Router};
 use health::health_routes;
+use note::note_routes;
 use openapi::{api_docs, docs_routes};
 use repository::repository_routes;
 use sqlx::SqlitePool;
@@ -14,6 +15,7 @@ use crate::{middleware::auth_middleware, state::AppState};
 
 pub mod auth;
 pub mod health;
+pub mod note;
 pub mod openapi;
 pub mod repository;
 
@@ -31,8 +33,9 @@ pub fn setup_router(db: SqlitePool, jwt_secret: &str) -> Router {
     aide::gen::infer_responses(true);
 
     let router = ApiRouter::new()
-        .nest("/health", health_routes(app_state.clone()))
-        .nest("/repository", repository_routes(app_state.clone()))
+        .merge(health_routes(app_state.clone()))
+        .merge(repository_routes(app_state.clone()))
+        .merge(note_routes(app_state.clone()))
         .merge(auth_routes())
         .merge(docs_routes())
         .finish_api_with(&mut api, api_docs)

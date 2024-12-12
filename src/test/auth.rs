@@ -7,7 +7,7 @@ async fn login_ok(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
     let login_response = server
-        .post("/login")
+        .post("/auth/login")
         .json(&json!({
                 "username": "Alice",
                 "password": "pass",
@@ -24,7 +24,7 @@ async fn login_unauthorized(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
     let login_response = server
-        .post("/login")
+        .post("/auth/login")
         .json(&json!({
                 "username": "Alice",
                 "password": "bad_pass",
@@ -39,7 +39,7 @@ async fn auth_missing_token(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
     let login_response = server
-        .post("/login")
+        .post("/auth/login")
         .json(&json!({
                 "username": "Alice",
                 "password": "pass",

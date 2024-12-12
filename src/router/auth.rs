@@ -23,8 +23,8 @@ use crate::{
 
 pub fn auth_routes() -> ApiRouter<AppState> {
     ApiRouter::new()
-        .api_route("/login", post_with(login_post, login_post_docs))
-        .api_route("/logout", post_with(logout_post, logout_post_docs))
+        .api_route("/auth/login", post_with(login_post, login_post_docs))
+        .api_route("/auth/logout", post_with(logout_post, logout_post_docs))
 }
 
 pub async fn login_post(

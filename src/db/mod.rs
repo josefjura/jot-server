@@ -5,6 +5,7 @@ use sqlx::{
 use tracing::info;
 
 pub mod auth;
+pub mod notes;
 pub mod repository;
 pub mod user;
 

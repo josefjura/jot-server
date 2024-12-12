@@ -9,11 +9,11 @@ use crate::state::AppState;
 use super::with_auth_middleware;
 
 fn health_routes_public() -> ApiRouter<AppState> {
-    ApiRouter::new().api_route("/ping", get_with(ping, ping_docs))
+    ApiRouter::new().api_route("/health/ping", get_with(ping, ping_docs))
 }
 
 fn health_routes_private(app_state: AppState) -> ApiRouter<AppState> {
-    let router = ApiRouter::new().api_route("/auth", get_with(auth_ping, auth_ping_docs));
+    let router = ApiRouter::new().api_route("/health/auth", get_with(auth_ping, auth_ping_docs));
 
     with_auth_middleware(router, app_state)
 }
