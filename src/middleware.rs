@@ -3,7 +3,7 @@ use axum::{
     middleware::Next,
     response::IntoResponse,
 };
-use axum_extra::extract::CookieJar;
+
 use jsonwebtoken::{decode, DecodingKey, Validation};
 
 use crate::{
@@ -15,19 +15,14 @@ use crate::{
 
 pub async fn auth_middleware(
     State(state): State<AppState>,
-    cookie_jar: CookieJar,
     mut req: Request,
     next: Next,
 ) -> RestResult<impl IntoResponse> {
-    let token_option = cookie_jar
-        .get("token")
-        .map(|cookie| cookie.value().to_string())
-        .or_else(|| {
-            req.headers()
-                .get("Authorization")
-                .and_then(|value| value.to_str().ok())
-                .and_then(|value| value.strip_prefix("Bearer ").map(|s| s.to_string()))
-        });
+    let token_option = req
+        .headers()
+        .get("Authorization")
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer ").map(|s| s.to_string()));
 
     let token = if let Some(tk) = token_option {
         tk

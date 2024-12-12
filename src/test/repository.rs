@@ -7,9 +7,9 @@ use crate::{
 async fn repository_get_all_ok(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
-    test::login(&server).await;
+    let token = test::login(&server).await;
 
-    let response = server.get("/repository").await;
+    let response = server.get("/repository").authorization_bearer(token).await;
 
     response.assert_status_ok();
 
@@ -22,9 +22,12 @@ async fn repository_get_all_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 async fn repository_get_by_id_bad_request(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
-    test::login(&server).await;
+    let token = test::login(&server).await;
 
-    let response = server.get("/repository/666").await;
+    let response = server
+        .get("/repository/666")
+        .authorization_bearer(token)
+        .await;
 
     response.assert_status_not_found();
 }
@@ -33,9 +36,12 @@ async fn repository_get_by_id_bad_request(db: sqlx::Pool<sqlx::Sqlite>) {
 async fn repository_get_by_id_ok(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
-    test::login(&server).await;
+    let token = test::login(&server).await;
 
-    let response = server.get("/repository/1").await;
+    let response = server
+        .get("/repository/1")
+        .authorization_bearer(token)
+        .await;
 
     response.assert_status_ok();
 
@@ -48,9 +54,12 @@ async fn repository_get_by_id_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 async fn repository_get_by_owner_ok(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
-    test::login(&server).await;
+    let token = test::login(&server).await;
 
-    let response = server.get("/user/repository").await;
+    let response = server
+        .get("/repository/user")
+        .authorization_bearer(token)
+        .await;
 
     response.assert_status_ok();
 

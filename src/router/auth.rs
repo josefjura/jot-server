@@ -1,4 +1,7 @@
-use aide::axum::IntoApiResponse;
+use aide::{
+    axum::{routing::post_with, ApiRouter, IntoApiResponse},
+    transform::TransformOperation,
+};
 use axum::{
     extract::State,
     http::{header::SET_COOKIE, StatusCode},
@@ -11,9 +14,18 @@ use tower_sessions::cookie::{time::Duration, Cookie, SameSite};
 use tracing::error;
 
 use crate::{
-    db::auth::check_email_password, errors::RestError, jwt::TokenClaims, model::LoginUserSchema,
+    db::auth::check_email_password,
+    errors::RestError,
+    jwt::TokenClaims,
+    model::{auth::LoginResponse, LoginUserSchema},
     state::AppState,
 };
+
+pub fn auth_routes() -> ApiRouter<AppState> {
+    ApiRouter::new()
+        .api_route("/login", post_with(login_post, login_post_docs))
+        .api_route("/logout", post_with(logout_post, logout_post_docs))
+}
 
 pub async fn login_post(
     State(state): State<AppState>,
@@ -62,7 +74,19 @@ pub async fn login_post(
 
     let headers = AppendHeaders([(SET_COOKIE, cookie.to_string())]);
 
-    (headers, StatusCode::OK).into_response()
+    (headers, Json(LoginResponse { token })).into_response()
+}
+
+pub fn login_post_docs(op: TransformOperation) -> TransformOperation {
+    op.description("Authenticate user and receive session token")
+        .tag("Authentication")
+        .response::<200, ()>()
+        .response_with::<400, (), _>(|res| {
+            res.description("Invalid request - missing username or password")
+        })
+        .response_with::<401, (), _>(|res| {
+            res.description("Authentication failed - invalid credentials")
+        })
 }
 
 pub async fn logout_post() -> impl IntoApiResponse {
@@ -75,4 +99,10 @@ pub async fn logout_post() -> impl IntoApiResponse {
     let headers = AppendHeaders([(SET_COOKIE, cookie.to_string())]);
 
     (headers, StatusCode::OK)
+}
+
+pub fn logout_post_docs(op: TransformOperation) -> TransformOperation {
+    op.description("Logout user and reject session token")
+        .tag("Authentication")
+        .response::<200, ()>()
 }

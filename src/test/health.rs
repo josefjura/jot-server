@@ -2,6 +2,7 @@ use axum_test::TestServer;
 use serde_json::json;
 
 use crate::{
+    model::auth::LoginResponse,
     router::setup_router,
     test::{setup_server, JWT_SECRET},
 };
@@ -12,7 +13,7 @@ async fn health_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 
     let server = TestServer::new(router).unwrap();
 
-    let response = server.get("/health").await;
+    let response = server.get("/health/ping").await;
 
     response.assert_status_ok();
 }
@@ -40,7 +41,12 @@ async fn health_auth_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 
     login_response.assert_status_ok();
 
-    let run_response = server.get("/health/auth").await;
+    let json = login_response.json::<LoginResponse>();
+
+    let run_response = server
+        .get("/health/auth")
+        .authorization_bearer(json.token)
+        .await;
 
     run_response.assert_status_ok();
 }

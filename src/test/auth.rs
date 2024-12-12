@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use crate::test::setup_server;
+use crate::{model::auth::LoginResponse, test::setup_server};
 
 #[sqlx::test(fixtures("user"))]
 async fn login_ok(db: sqlx::Pool<sqlx::Sqlite>) {
@@ -15,6 +15,8 @@ async fn login_ok(db: sqlx::Pool<sqlx::Sqlite>) {
         .await;
 
     login_response.assert_status_ok();
+
+    let _ = login_response.json::<LoginResponse>();
 }
 
 #[sqlx::test(fixtures("user"))]
@@ -33,7 +35,7 @@ async fn login_unauthorized(db: sqlx::Pool<sqlx::Sqlite>) {
 }
 
 #[sqlx::test(fixtures("user"))]
-async fn logout_ok(db: sqlx::Pool<sqlx::Sqlite>) {
+async fn auth_missing_token(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
     let login_response = server
@@ -46,14 +48,17 @@ async fn logout_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 
     login_response.assert_status_ok();
 
-    let run_response = server.get("/health/auth").await;
+    let json = login_response.json::<LoginResponse>();
+
+    // Call with token
+    let run_response = server
+        .get("/health/auth")
+        .authorization_bearer(json.token.clone())
+        .await;
 
     run_response.assert_status_ok();
 
-    let logout_response = server.post("/logout").await;
-
-    logout_response.assert_status_ok();
-
+    // Call without token
     let run_response = server.get("/health/auth").await;
 
     run_response.assert_status_forbidden();

@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+pub mod auth;
 pub mod note;
 pub mod repository;
 pub mod user;
