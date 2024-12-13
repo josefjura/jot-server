@@ -27,7 +27,8 @@ pub async fn ping() -> impl IntoApiResponse {
 }
 
 pub fn ping_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Health check endpoint")
+    op.summary("Health check")
+        .description("Health check endpoint")
         .tag("Health")
         .response::<200, ()>() // Simple 200 OK response with no body
 }
@@ -37,7 +38,8 @@ pub async fn auth_ping() -> impl IntoApiResponse {
 }
 
 pub fn auth_ping_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Health check endpoint requiring authentication")
+    op.summary("Auth health check")
+        .description("Health check endpoint requiring authentication")
         .tag("Health")
         .response::<200, ()>() // Simple 200 OK response with no body
         .response_with::<401, (), _>(|res| res.description("Not authenticated"))

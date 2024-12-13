@@ -90,8 +90,9 @@ pub async fn get_all_by_owner(
 }
 
 pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Retrieve all notes owned by the authenticated user")
-        .tag("Note")
+    op.summary("Retrieve user repositories")
+        .description("Retrieve all notes owned by the authenticated user")
+        .tag("User")
         .response_with::<200, Json<Vec<Note>>, _>(|res| {
             res.example(vec![
                 Note {
@@ -166,8 +167,9 @@ pub async fn get_all_by_repository(
 }
 
 pub fn get_all_by_repository_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Retrieve all repositories in specified repository")
-        .tag("Note")
+    op.summary("Retrieve all by repository")
+        .description("Retrieve all notes in specified repository")
+        .tag("Repository")
         .response_with::<200, Json<Vec<Note>>, _>(|res| {
             res.example(vec![
                 Note {

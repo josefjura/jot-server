@@ -43,7 +43,8 @@ pub async fn get_all(State(state): State<AppState>) -> impl IntoApiResponse {
 }
 
 pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Retrieve all existing repositories")
+    op.summary("Retrieve all")
+        .description("Retrieve all existing repositories")
         .tag("Repository")
         .response_with::<200, Json<Vec<Repository>>, _>(|res| {
             res.example(vec![
@@ -81,8 +82,9 @@ pub async fn get_all_by_owner(
 }
 
 pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Retrieve all repositories owned by the authenticated user")
-        .tag("Repository")
+    op.summary("Retrieve user repositories")
+        .description("Retrieve all repositories owned by the authenticated user")
+        .tag("User")
         .response_with::<200, Json<Vec<Repository>>, _>(|res| {
             res.example(vec![
                 Repository {
@@ -120,7 +122,8 @@ pub async fn get_by_id(Path(id): Path<i64>, State(state): State<AppState>) -> im
 }
 
 pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Retrieve a repository by its ID")
+    op.summary("Retrieve by ID")
+        .description("Retrieve a repository by its ID")
         .tag("Repository")
         .response_with::<200, Json<Repository>, _>(|res| {
             res.example(Repository {

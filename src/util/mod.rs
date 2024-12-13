@@ -19,7 +19,6 @@ impl JsonSchema for DateTimeWrapper {
         let mut schema = SchemaObject::default();
         schema.instance_type = Some(InstanceType::String.into());
         schema.format = Some("date-time".to_string());
-        //schema.description = Some("RFC3339/ISO 8601 date-time string".to_string());
         Schema::Object(schema)
     }
 }

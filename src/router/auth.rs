@@ -78,7 +78,8 @@ pub async fn login_post(
 }
 
 pub fn login_post_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Authenticate user and receive session token")
+    op.summary("Authenticate user")
+        .description("Authenticate user and receive session token")
         .tag("Authentication")
         .response::<200, ()>()
         .response_with::<400, (), _>(|res| {
@@ -102,7 +103,8 @@ pub async fn logout_post() -> impl IntoApiResponse {
 }
 
 pub fn logout_post_docs(op: TransformOperation) -> TransformOperation {
-    op.description("Logout user and reject session token")
+    op.summary("Logout user")
+        .description("Logout user and reject session token")
         .tag("Authentication")
         .response::<200, ()>()
 }
