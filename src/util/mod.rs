@@ -15,10 +15,13 @@ impl JsonSchema for DateTimeWrapper {
         "DateTime".to_string()
     }
 
-    fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        let mut schema = SchemaObject::default();
-        schema.instance_type = Some(InstanceType::String.into());
-        schema.format = Some("date-time".to_string());
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        let schema = SchemaObject {
+            instance_type: Some(InstanceType::String.into()),
+            format: Some("date-time".to_string()),
+            ..Default::default()
+        };
+
         Schema::Object(schema)
     }
 }

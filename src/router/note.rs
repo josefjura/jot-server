@@ -40,11 +40,10 @@ pub async fn get_all(State(state): State<AppState>) -> impl IntoApiResponse {
         RestError::Database(e)
     });
 
-    if let Err(e) = items {
-        return e.into_response();
+    match items {
+        Ok(items) => Json(items).into_response(),
+        Err(e) => e.into_response(),
     }
-
-    Json(items.unwrap()).into_response()
 }
 
 pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
@@ -82,11 +81,10 @@ pub async fn get_all_by_owner(
             RestError::Database(e)
         });
 
-    if let Err(e) = items {
-        return e.into_response();
+    match items {
+        Ok(items) => Json(items).into_response(),
+        Err(e) => e.into_response(),
     }
-
-    Json(items.unwrap()).into_response()
 }
 
 pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
@@ -120,17 +118,25 @@ pub async fn get_by_id(Path(id): Path<i64>, State(state): State<AppState>) -> im
         RestError::Database(e)
     });
 
-    if let Err(e) = item {
-        return e.into_response();
+    match item {
+        Ok(Some(item)) => Json(item).into_response(),
+        Ok(None) => RestError::NotFound.into_response(),
+        Err(e) => e.into_response(),
     }
 
-    let item = item.unwrap();
+    // }
 
-    if item.is_none() {
-        return RestError::NotFound.into_response();
-    }
+    // if let Err(e) = item {
+    //     return e.into_response();
+    // }
 
-    Json(item).into_response()
+    // let item = item.unwrap();
+
+    // if item.is_none() {
+    //     return RestError::NotFound.into_response();
+    // }
+
+    // Json(item).into_response()
 }
 
 pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
@@ -159,11 +165,10 @@ pub async fn get_all_by_repository(
             RestError::Database(e)
         });
 
-    if let Err(e) = items {
-        return e.into_response();
+    match items {
+        Ok(items) => Json(items).into_response(),
+        Err(e) => e.into_response(),
     }
-
-    Json(items.unwrap()).into_response()
 }
 
 pub fn get_all_by_repository_docs(op: TransformOperation) -> TransformOperation {

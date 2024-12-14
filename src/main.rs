@@ -1,9 +1,11 @@
-use std::env;
+#![deny(clippy::expect_used, clippy::unwrap_used, clippy::panic)]
+#![warn(clippy::expect_used)]
 
 use db::create_db_pool;
 use dotenvy::dotenv;
 use errors::ApplicationError;
 use router::setup_router;
+use std::env;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -47,7 +49,12 @@ async fn run() -> Result<(), ApplicationError> {
         .await
         .map_err(ApplicationError::from)?;
 
-    info!("Listening on: {}", listener.local_addr().unwrap());
+    info!(
+        "Listening on: {}",
+        listener
+            .local_addr()
+            .expect("Could not get local address, or port might be in use.")
+    );
 
     axum::serve(listener, app)
         .await

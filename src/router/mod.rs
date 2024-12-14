@@ -36,7 +36,7 @@ pub fn setup_router(db: SqlitePool, jwt_secret: &str) -> Router {
         .merge(health_routes(app_state.clone()))
         .merge(repository_routes(app_state.clone()))
         .merge(note_routes(app_state.clone()))
-        .merge(auth_routes())
+        .merge(auth_routes(app_state.clone()))
         .merge(docs_routes())
         .finish_api_with(&mut api, api_docs)
         .layer(Extension(Arc::new(api)))

@@ -33,6 +33,11 @@ pub fn api_docs(api: TransformOpenApi) -> TransformOpenApi {
             description: Some("Authentication endpoints".into()),
             ..Default::default()
         })
+        .tag(Tag {
+            name: "Device Authorization".into(),
+            description: Some("Endponts for auth management from the CLI client".into()),
+            ..Default::default()
+        })
 }
 
 // Handler to serve Swagger UI

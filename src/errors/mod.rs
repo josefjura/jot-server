@@ -60,6 +60,8 @@ pub enum AuthError {
     TokenInvalid,
     #[error("Error while connecting to the database.")]
     DatabaseError,
+    #[error("Error while creating a token.")]
+    TokenCreation(String),
 }
 
 // Implementation to convert AppError into a Response

@@ -2,7 +2,11 @@ use argon2::{
     password_hash::{rand_core::OsRng, SaltString},
     Argon2, PasswordHash, PasswordHasher, PasswordVerifier,
 };
+use jsonwebtoken::{EncodingKey, Header};
 use serde::{Deserialize, Serialize};
+use tracing::error;
+
+use crate::errors::AuthError;
 
 /// Struct for holding data from the JWT.
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,6 +39,29 @@ pub fn verify_password(password: &str, hashed_password: &str) -> bool {
     };
 
     is_valid
+}
+
+pub fn create_token(user_id: i64, secret: &[u8]) -> Result<String, AuthError> {
+    let now = chrono::Utc::now();
+    let iat = now.timestamp() as usize;
+    let exp = (now + chrono::Duration::days(7)).timestamp() as usize;
+    let claims = TokenClaims {
+        sub: user_id.to_string(),
+        exp,
+        iat,
+    };
+
+    let token = jsonwebtoken::encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret),
+    )
+    .map_err(|e| {
+        error!("{}", e);
+        AuthError::TokenCreation("Failed to create token".to_string())
+    })?;
+
+    Ok(token)
 }
 
 #[cfg(test)]

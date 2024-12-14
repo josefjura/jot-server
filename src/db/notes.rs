@@ -16,7 +16,7 @@ pub async fn get_all(db: SqlitePool) -> Result<Vec<Note>, DbError> {
 
     items
         .into_iter()
-        .map(|item| item.try_into().map_err(|e| DbError::EntityMapping(e)))
+        .map(|item| item.try_into().map_err(DbError::EntityMapping))
         .collect()
 }
 
@@ -80,6 +80,6 @@ pub async fn get_by_id(db: SqlitePool, id: i64) -> Result<Option<Note>, DbError>
             DbError::Unknown(e)
         })?;
 
-    item.map(|entity| entity.try_into().map_err(|e| DbError::EntityMapping(e)))
+    item.map(|entity| entity.try_into().map_err(DbError::EntityMapping))
         .transpose()
 }
