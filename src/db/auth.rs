@@ -79,8 +79,11 @@ pub async fn add_token_to_device_challenge(
     Ok(true)
 }
 
-pub async fn delete_device_challenge(device_code: String, db: &SqlitePool) -> Result<(), DbError> {
-    sqlx::query!(
+pub async fn delete_device_challenge(
+    device_code: String,
+    db: &SqlitePool,
+) -> Result<bool, DbError> {
+    let query = sqlx::query!(
         r#"
 			DELETE FROM device_auth
 			WHERE device_code = ?
@@ -91,7 +94,7 @@ pub async fn delete_device_challenge(device_code: String, db: &SqlitePool) -> Re
     .await
     .map_err(DbError::Unknown)?;
 
-    Ok(())
+    Ok(query.rows_affected() > 0)
 }
 
 pub async fn get_token_from_device_challenge(

@@ -145,12 +145,14 @@ pub async fn device_delete(
 ) -> impl IntoApiResponse {
     let result = auth::delete_device_challenge(code, &state.db).await;
 
-    if let Err(err) = result {
-        error!("{}", err);
-        return RestError::Database(err).into_response();
-    }
-
-    StatusCode::NO_CONTENT.into_response()
+		match result {
+			Ok(true) => StatusCode::NO_CONTENT.into_response(),
+			Ok(false) => StatusCode::NOT_FOUND.into_response(),
+			Err(err) => {
+				error!("{}", err);
+				RestError::Database(err).into_response()
+			}
+		}
 }
 
 pub fn device_delete_docs(op: TransformOperation) -> TransformOperation {
@@ -159,6 +161,9 @@ pub fn device_delete_docs(op: TransformOperation) -> TransformOperation {
 			.tag("Device Authorization")
 			.response_with::<204, (), _>(|res| 
 					res.description("Device challenge successfully deleted")
+			)
+			.response_with::<404, (), _>(|res| 
+					res.description("No device challenge found for the provided code")
 			)
 			.response_with::<500, (), _>(|res| 
 					res.description("Database error occurred while deleting device challenge")

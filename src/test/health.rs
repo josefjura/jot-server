@@ -34,7 +34,7 @@ async fn health_auth_ok(db: sqlx::Pool<sqlx::Sqlite>) {
     let login_response = server
         .post("/auth/login")
         .json(&json!({
-                "username": "Alice",
+                "username": "alice@email.com",
                 "password": "pass",
         }))
         .await;
