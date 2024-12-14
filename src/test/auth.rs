@@ -1,10 +1,7 @@
 use axum::http::StatusCode;
 use serde_json::json;
 
-use crate::{
-    model::auth::LoginResponse,
-    test::{self, setup_server},
-};
+use crate::{model::auth::LoginResponse, test::setup_server};
 
 use super::login;
 
@@ -134,6 +131,46 @@ async fn auth_device_delete(db: sqlx::Pool<sqlx::Sqlite>) {
     let response = server
         .delete("/auth/device/code-with-token")
         .authorization_bearer(token)
+        .await;
+
+    response.assert_status(StatusCode::NO_CONTENT);
+}
+
+#[sqlx::test(fixtures("user"))]
+async fn auth_device_flow(db: sqlx::Pool<sqlx::Sqlite>) {
+    let server = setup_server(db.clone());
+
+    let login_token = login(&server).await;
+
+    // Create device challenge
+    let response = server
+        .post("/auth/device")
+        .json(&json!({
+                "device_code": "mock_device_code",
+        }))
+        .await;
+    response.assert_status(StatusCode::CREATED);
+
+    // Check the status of the device challenge
+    let response = server.get("/auth/status/mock_device_code").await;
+    response.assert_status(StatusCode::ACCEPTED);
+
+    let token = "mock_token".to_string();
+
+    // Add token to device challenge
+    let r = crate::db::auth::add_token_to_device_challenge("mock_device_code", token, &db).await;
+
+    assert!(r.is_ok());
+    assert_eq!(r.unwrap(), true);
+
+    // Check the status of the device challenge
+    let response = server.get("/auth/status/mock_device_code").await;
+    response.assert_status_ok();
+
+    // Delete the device challenge
+    let response = server
+        .delete("/auth/device/mock_device_code")
+        .authorization_bearer(login_token)
         .await;
 
     response.assert_status(StatusCode::NO_CONTENT);
