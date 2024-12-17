@@ -16,7 +16,8 @@ pub struct TokenClaims {
     pub exp: usize,
 }
 
-pub fn hash_password(password: &str) -> String {
+#[allow(dead_code)]
+pub fn hash_password(password: &str) -> Result<String, AuthError> {
     // Create an instance of the Argon2 hasher
     let argon2 = Argon2::default();
 
@@ -24,10 +25,15 @@ pub fn hash_password(password: &str) -> String {
     let salt = SaltString::generate(&mut OsRng);
 
     // Hash the password
-    argon2
+    let hashed = argon2
         .hash_password(password.as_bytes(), &salt)
-        .expect("Password hashing failed")
-        .to_string()
+        .map_err(|e| {
+            error!("{}", e);
+            AuthError::PasswordHash("Failed to hash password".to_string())
+        })?
+        .to_string();
+
+    Ok(hashed)
 }
 
 pub fn verify_password(password: &str, hashed_password: &str) -> bool {
@@ -71,7 +77,7 @@ mod test {
 
     #[test]
     fn test_token_claims() {
-        let hash = hash_password("pass");
+        let hash = hash_password("pass").unwrap();
         println!("hash: {}", hash);
         let valid = verify_password("pass", &hash);
         assert!(valid);

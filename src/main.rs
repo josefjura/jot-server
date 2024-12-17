@@ -51,9 +51,7 @@ async fn run() -> Result<(), ApplicationError> {
 
     info!(
         "Listening on: {}",
-        listener
-            .local_addr()
-            .expect("Could not get local address, or port might be in use.")
+        listener.local_addr().map_err(ApplicationError::from)?
     );
 
     axum::serve(listener, app)

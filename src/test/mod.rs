@@ -6,7 +6,6 @@ use crate::{model::auth::LoginResponse, router::setup_router};
 mod auth;
 mod health;
 mod note;
-mod repository;
 
 const JWT_SECRET: &str = "BrHTysKWKIhwOTyqYvqEUOf3rhTH06Q3k2ZBf3Zbcew=";
 

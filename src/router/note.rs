@@ -1,18 +1,29 @@
 use aide::{
-    axum::{routing::get_with, ApiRouter, IntoApiResponse},
+    axum::{
+        routing::{get_with, post_with},
+        ApiRouter, IntoApiResponse,
+    },
+    openapi::{Parameter, ParameterData, ParameterSchemaOrContent},
     transform::TransformOperation,
 };
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
+    http::StatusCode,
     response::IntoResponse,
     Extension, Json,
 };
+use axum_extra::extract::OptionalQuery;
 use chrono::Utc;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     db,
     errors::RestError,
-    model::{note::Note, user::User},
+    model::{
+        note::{CreateNoteRequest, Note},
+        user::User,
+    },
     state::AppState,
 };
 
@@ -20,15 +31,15 @@ use super::with_auth_middleware;
 
 pub fn note_routes(app_state: AppState) -> ApiRouter<AppState> {
     let router = ApiRouter::new()
-        .api_route("/note", get_with(get_all, get_all_docs))
+        .api_route(
+            "/note",
+            get_with(get_all, get_all_docs).post_with(create, create_docs),
+        )
+        .api_route("/note/search", post_with(post_search, post_search_docs))
         .api_route("/note/:id", get_with(get_by_id, get_by_id_docs))
         .api_route(
             "/user/note",
             get_with(get_all_by_owner, get_all_by_owner_docs),
-        )
-        .api_route(
-            "/repository/:id/note",
-            get_with(get_all_by_repository, get_all_by_repository_docs),
         );
 
     with_auth_middleware(router, app_state)
@@ -54,14 +65,14 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some note".to_string(),
-                    repository_id: 1,
+                    user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
                 Note {
                     id: 1,
                     content: "Some other note".to_string(),
-                    repository_id: 1,
+                    user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
@@ -88,7 +99,7 @@ pub async fn get_all_by_owner(
 }
 
 pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
-    op.summary("Retrieve user repositories")
+    op.summary("Retrieve user notes")
         .description("Retrieve all notes owned by the authenticated user")
         .tag("User")
         .response_with::<200, Json<Vec<Note>>, _>(|res| {
@@ -96,14 +107,14 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some note".to_string(),
-                    repository_id: 1,
+                    user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
                 Note {
                     id: 1,
                     content: "Some other note".to_string(),
-                    repository_id: 2,
+                    user_id: 2,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
@@ -123,20 +134,6 @@ pub async fn get_by_id(Path(id): Path<i64>, State(state): State<AppState>) -> im
         Ok(None) => RestError::NotFound.into_response(),
         Err(e) => e.into_response(),
     }
-
-    // }
-
-    // if let Err(e) = item {
-    //     return e.into_response();
-    // }
-
-    // let item = item.unwrap();
-
-    // if item.is_none() {
-    //     return RestError::NotFound.into_response();
-    // }
-
-    // Json(item).into_response()
 }
 
 pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
@@ -146,7 +143,7 @@ pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
             res.example(Note {
                 id: 1,
                 content: "Some note".to_string(),
-                repository_id: 1,
+                user_id: 1,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             })
@@ -154,16 +151,50 @@ pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
         .response_with::<401, (), _>(|res| res.description("Not authenticated"))
 }
 
-pub async fn get_all_by_repository(
+pub async fn create(
     State(state): State<AppState>,
     Extension(user): Extension<User>,
+    Json(req): Json<CreateNoteRequest>,
 ) -> impl IntoApiResponse {
-    let items = db::notes::get_all_by_repository(state.db, user.id)
+    let note = db::notes::create(state.db, user.id, req)
         .await
         .map_err(|e| {
-            tracing::error!("Failed to get all repositories: {:?}", e);
+            tracing::error!("Failed to create note: {:?}", e);
             RestError::Database(e)
         });
+
+    match note {
+        Ok(note) => (StatusCode::CREATED, Json(note)).into_response(),
+        Err(e) => e.into_response(),
+    }
+}
+
+pub fn create_docs(op: TransformOperation) -> TransformOperation {
+    op.summary("Create note")
+        .description("Creates a new note with the provided content")
+        .tag("Note")
+        .response_with::<200, Json<Note>, _>(|res| {
+            res.description("Note created successfully").example(Note {
+                id: 1,
+                content: "This is the content of my note".to_string(),
+                user_id: 1,
+                created_at: chrono::Utc::now(),
+                updated_at: chrono::Utc::now(),
+            })
+        })
+        .response_with::<500, (), _>(|res| {
+            res.description("Database error occurred while creating the note")
+        })
+}
+
+pub async fn post_search(
+    State(state): State<AppState>,
+    Json(params): Json<NoteSearchRequest>,
+) -> impl IntoApiResponse {
+    let items = db::notes::search(state.db, params).await.map_err(|e| {
+        tracing::error!("Failed to get all repositories: {:?}", e);
+        RestError::Database(e)
+    });
 
     match items {
         Ok(items) => Json(items).into_response(),
@@ -171,27 +202,38 @@ pub async fn get_all_by_repository(
     }
 }
 
-pub fn get_all_by_repository_docs(op: TransformOperation) -> TransformOperation {
-    op.summary("Retrieve all by repository")
-        .description("Retrieve all notes in specified repository")
-        .tag("Repository")
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct NoteSearchRequest {
+    pub term: Option<String>,
+    pub tag: Option<Vec<String>>,
+    pub date: Option<String>,
+    pub lines: Option<u32>,
+}
+
+pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
+    op.summary("Search notes")
+        .description("Search for notes using optional filters for text content, date, and tags")
+        .tag("Note")
         .response_with::<200, Json<Vec<Note>>, _>(|res| {
-            res.example(vec![
-                Note {
-                    id: 1,
-                    content: "Some note".to_string(),
-                    repository_id: 1,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
-                },
-                Note {
-                    id: 1,
-                    content: "Some other note".to_string(),
-                    repository_id: 1,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
-                },
-            ])
+            res.description("Notes matching search criteria")
+                .example(vec![
+                    Note {
+                        id: 1,
+                        content: "Discussion about Q1 goals".to_string(),
+                        user_id: 1,
+                        created_at: chrono::Utc::now(),
+                        updated_at: chrono::Utc::now(),
+                    },
+                    Note {
+                        id: 2,
+                        content: "Status update from meeting".to_string(),
+                        user_id: 2,
+                        created_at: chrono::Utc::now(),
+                        updated_at: chrono::Utc::now(),
+                    },
+                ])
         })
-        .response_with::<401, (), _>(|res| res.description("Not authenticated"))
+        .response_with::<500, (), _>(|res| {
+            res.description("Database error occurred while searching notes")
+        })
 }

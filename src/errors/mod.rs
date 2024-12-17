@@ -46,6 +46,8 @@ pub enum DbError {
     Unknown(#[from] sqlx::Error),
     #[error("Error mapping entity: {0}")]
     EntityMapping(String),
+    #[error("Error creating note: {0}")]
+    UnableToCreate(String),
 }
 
 #[derive(Error, Debug, Clone)]
@@ -62,6 +64,14 @@ pub enum AuthError {
     DatabaseError,
     #[error("Error while creating a token.")]
     TokenCreation(String),
+    #[error("Error while hashing password.")]
+    PasswordHash(String),
+}
+
+#[derive(Error, Debug, Clone)]
+pub enum DateFilterError {
+    #[error("Cannot parse date filter: {0}")]
+    ParseError(String),
 }
 
 // Implementation to convert AppError into a Response

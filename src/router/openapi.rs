@@ -19,13 +19,13 @@ pub fn api_docs(api: TransformOpenApi) -> TransformOpenApi {
         .summary("API documentation for Jot server")
         .description(include_str!("../../README.md"))
         .tag(Tag {
-            name: "Health".into(),
-            description: Some("Health check endpoints".into()),
+            name: "Note".into(),
+            description: Some("Note management endpoints".into()),
             ..Default::default()
         })
         .tag(Tag {
-            name: "Repository".into(),
-            description: Some("Repository managenement endpoints".into()),
+            name: "Health".into(),
+            description: Some("Health check endpoints".into()),
             ..Default::default()
         })
         .tag(Tag {

@@ -1,13 +1,15 @@
-use std::sync::Arc;
-
 use aide::{axum::ApiRouter, openapi::OpenApi};
 use auth::auth_routes;
-use axum::{middleware, Extension, Router};
+use axum::{
+    error_handling::HandleErrorLayer, extract::rejection::JsonRejection, http::StatusCode,
+    middleware, BoxError, Extension, Json, Router,
+};
 use health::health_routes;
 use note::note_routes;
 use openapi::{api_docs, docs_routes};
-use repository::repository_routes;
 use sqlx::SqlitePool;
+use std::sync::Arc;
+use tower::{Layer, ServiceBuilder};
 use tower_http::trace::TraceLayer;
 use tower_sessions::{MemoryStore, SessionManagerLayer};
 
@@ -17,7 +19,6 @@ pub mod auth;
 pub mod health;
 pub mod note;
 pub mod openapi;
-pub mod repository;
 
 pub fn setup_router(db: SqlitePool, jwt_secret: &str) -> Router {
     aide::gen::on_error(|error| {
@@ -34,7 +35,6 @@ pub fn setup_router(db: SqlitePool, jwt_secret: &str) -> Router {
 
     let router = ApiRouter::new()
         .merge(health_routes(app_state.clone()))
-        .merge(repository_routes(app_state.clone()))
         .merge(note_routes(app_state.clone()))
         .merge(auth_routes(app_state.clone()))
         .merge(docs_routes())
