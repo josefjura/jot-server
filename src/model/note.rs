@@ -10,6 +10,7 @@ use sqlx::prelude::FromRow;
 pub struct Note {
     pub id: i64,
     pub content: String,
+    pub tags: String,
     pub user_id: i64,
     #[schemars(with = "DateTimeWrapper")]
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -21,6 +22,7 @@ pub struct Note {
 pub struct NoteEntity {
     pub id: i64,
     pub content: String,
+    pub tags: String,
     pub user_id: i64,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
@@ -43,6 +45,7 @@ impl TryFrom<NoteEntity> for Note {
         Ok(Note {
             id: val.id,
             content: val.content,
+            tags: val.tags,
             user_id: val.user_id,
             created_at,
             updated_at,
@@ -53,6 +56,7 @@ impl TryFrom<NoteEntity> for Note {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CreateNoteRequest {
     pub content: String,
+    pub tags: Vec<String>,
 }
 
 pub fn parse_date_filter(filter: &str) -> DateFilter {

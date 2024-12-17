@@ -65,12 +65,15 @@ pub async fn create(
     user_id: i64,
     note: CreateNoteRequest,
 ) -> Result<Note, DbError> {
+    let tag_value = note.tags.join(",");
+
     let id = sqlx::query!(
         r#"
-			INSERT INTO notes (content, user_id)
-			VALUES (?, ?)
+			INSERT INTO notes (content, tags, user_id)
+			VALUES (?, ?, ?)
 		"#,
         note.content,
+        tag_value,
         user_id
     )
     .execute(&db)
@@ -100,13 +103,13 @@ pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Not
         args.push(search_term);
     }
 
-    // if let Some(tags) = params.tag {
-    //     // Add a condition for each tag (AND relationship)
-    //     for tag in tags {
-    //         query.push_str(" AND id IN (SELECT note_id FROM note_tags WHERE tag = ?)");
-    //         args.push(tag);
-    //     }
-    // }
+    // Add tag filter (tags are comma separated)
+    if let Some(tags) = params.tag {
+        for tag in tags {
+            query.push_str(" AND tags LIKE ?");
+            args.push(format!("%{}%", tag));
+        }
+    }
 
     if let Some(date_filter) = params.date {
         match parse_date_filter(&date_filter) {
@@ -145,8 +148,6 @@ pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Not
 
     // Add order by
     query.push_str(" ORDER BY created_at DESC");
-
-    println!("Query: {}", query);
 
     // Limit preview lines if specified
     // if let Some(lines) = params.lines {

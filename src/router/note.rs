@@ -65,6 +65,7 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some note".to_string(),
+                    tags: "tag1,tag2".to_string(),
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -72,6 +73,7 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some other note".to_string(),
+                    tags: "tag1,tag2".to_string(),
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -107,6 +109,7 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some note".to_string(),
+                    tags: "tag1,tag2".to_string(),
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -114,6 +117,7 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some other note".to_string(),
+                    tags: "tag1,tag2".to_string(),
                     user_id: 2,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -143,6 +147,7 @@ pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
             res.example(Note {
                 id: 1,
                 content: "Some note".to_string(),
+                tags: "tag1,tag2".to_string(),
                 user_id: 1,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
@@ -177,6 +182,7 @@ pub fn create_docs(op: TransformOperation) -> TransformOperation {
             res.description("Note created successfully").example(Note {
                 id: 1,
                 content: "This is the content of my note".to_string(),
+                tags: "tag1,tag2".to_string(),
                 user_id: 1,
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
@@ -220,6 +226,7 @@ pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
                     Note {
                         id: 1,
                         content: "Discussion about Q1 goals".to_string(),
+                        tags: "tag1,tag2".to_string(),
                         user_id: 1,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),
@@ -227,6 +234,7 @@ pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
                     Note {
                         id: 2,
                         content: "Status update from meeting".to_string(),
+                        tags: "tag1,tag2".to_string(),
                         user_id: 2,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),
