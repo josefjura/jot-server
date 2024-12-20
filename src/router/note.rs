@@ -3,19 +3,17 @@ use aide::{
         routing::{get_with, post_with},
         ApiRouter, IntoApiResponse,
     },
-    openapi::{Parameter, ParameterData, ParameterSchemaOrContent},
     transform::TransformOperation,
 };
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     Extension, Json,
 };
-use axum_extra::extract::OptionalQuery;
 use chrono::Utc;
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
     db,
@@ -65,7 +63,7 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some note".to_string(),
-                    tags: "tag1,tag2".to_string(),
+                    tags: vec!["tag1".to_string(), "tag2".to_string()],
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -73,7 +71,7 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some other note".to_string(),
-                    tags: "tag1,tag2".to_string(),
+                    tags: vec!["tag1".to_string(), "tag2".to_string()],
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -109,7 +107,7 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some note".to_string(),
-                    tags: "tag1,tag2".to_string(),
+                    tags: vec!["tag1".to_string(), "tag2".to_string()],
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -117,7 +115,7 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                 Note {
                     id: 1,
                     content: "Some other note".to_string(),
-                    tags: "tag1,tag2".to_string(),
+                    tags: vec!["tag1".to_string(), "tag2".to_string()],
                     user_id: 2,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -147,7 +145,7 @@ pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
             res.example(Note {
                 id: 1,
                 content: "Some note".to_string(),
-                tags: "tag1,tag2".to_string(),
+                tags: vec!["tag1".to_string(), "tag2".to_string()],
                 user_id: 1,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
@@ -182,7 +180,7 @@ pub fn create_docs(op: TransformOperation) -> TransformOperation {
             res.description("Note created successfully").example(Note {
                 id: 1,
                 content: "This is the content of my note".to_string(),
-                tags: "tag1,tag2".to_string(),
+                tags: vec!["tag1".to_string(), "tag2".to_string()],
                 user_id: 1,
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
@@ -211,9 +209,8 @@ pub async fn post_search(
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct NoteSearchRequest {
     pub term: Option<String>,
-    pub tag: Option<Vec<String>>,
+    pub tag: Vec<String>,
     pub date: Option<String>,
-    pub lines: Option<u32>,
 }
 
 pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
@@ -226,7 +223,7 @@ pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
                     Note {
                         id: 1,
                         content: "Discussion about Q1 goals".to_string(),
-                        tags: "tag1,tag2".to_string(),
+                        tags: vec!["tag1".to_string(), "tag2".to_string()],
                         user_id: 1,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),
@@ -234,7 +231,7 @@ pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
                     Note {
                         id: 2,
                         content: "Status update from meeting".to_string(),
-                        tags: "tag1,tag2".to_string(),
+                        tags: vec!["tag1".to_string(), "tag2".to_string()],
                         user_id: 2,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),

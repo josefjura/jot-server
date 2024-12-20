@@ -98,17 +98,16 @@ pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Not
 
     // Build query conditionally based on params
     if let Some(term) = params.term {
-        query.push_str(" AND ( content LIKE ?)");
+        query.push_str(" AND content LIKE ?");
         let search_term = format!("%{}%", term);
         args.push(search_term);
     }
 
     // Add tag filter (tags are comma separated)
-    if let Some(tags) = params.tag {
-        for tag in tags {
-            query.push_str(" AND tags LIKE ?");
-            args.push(format!("%{}%", tag));
-        }
+
+    for tag in params.tag {
+        query.push_str(" AND tags LIKE ?");
+        args.push(format!("%{}%", tag));
     }
 
     if let Some(date_filter) = params.date {
@@ -142,7 +141,6 @@ pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Not
                 args.push(date.to_string());
             }
             DateFilter::All => {}
-            _ => {}
         }
     }
 

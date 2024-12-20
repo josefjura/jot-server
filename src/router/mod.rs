@@ -1,15 +1,11 @@
 use aide::{axum::ApiRouter, openapi::OpenApi};
 use auth::auth_routes;
-use axum::{
-    error_handling::HandleErrorLayer, extract::rejection::JsonRejection, http::StatusCode,
-    middleware, BoxError, Extension, Json, Router,
-};
+use axum::{middleware, Extension, Router};
 use health::health_routes;
 use note::note_routes;
 use openapi::{api_docs, docs_routes};
 use sqlx::SqlitePool;
 use std::sync::Arc;
-use tower::{Layer, ServiceBuilder};
 use tower_http::trace::TraceLayer;
 use tower_sessions::{MemoryStore, SessionManagerLayer};
 

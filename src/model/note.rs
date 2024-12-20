@@ -10,7 +10,7 @@ use sqlx::prelude::FromRow;
 pub struct Note {
     pub id: i64,
     pub content: String,
-    pub tags: String,
+    pub tags: Vec<String>,
     pub user_id: i64,
     #[schemars(with = "DateTimeWrapper")]
     pub created_at: chrono::DateTime<chrono::Utc>,
@@ -45,7 +45,7 @@ impl TryFrom<NoteEntity> for Note {
         Ok(Note {
             id: val.id,
             content: val.content,
-            tags: val.tags,
+            tags: val.tags.split(",").map(|s| s.to_string()).collect(),
             user_id: val.user_id,
             created_at,
             updated_at,

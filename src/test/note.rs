@@ -18,7 +18,7 @@ async fn note_get_all_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 
     let json = response.json::<Vec<Note>>();
 
-    assert_eq!(4, json.len());
+    assert_eq!(5, json.len());
 }
 
 #[sqlx::test(fixtures("user"))]
@@ -72,14 +72,15 @@ async fn note_create_ok(db: sqlx::Pool<sqlx::Sqlite>) {
         .post("/note")
         .authorization_bearer(token)
         .json(&json!({
-                "content": "Some note"
+                "content": "Some note",
+                "tags": ["tag1", "tag2"]
         }))
         .await;
 
     response.assert_status(StatusCode::CREATED);
     let note = response.json::<Note>();
 
-    assert_eq!(5, note.id);
+    assert_eq!(6, note.id);
     assert_eq!("Some note", note.content);
 }
 
@@ -101,15 +102,10 @@ async fn note_search_all_params_ok(db: sqlx::Pool<sqlx::Sqlite>) {
         .await;
 
     response.assert_status_ok();
-
-    let json = response.json::<Vec<Note>>();
-
-    assert_eq!(1, json.len());
-    assert_eq!(5, json[0].id);
 }
 
 #[sqlx::test(fixtures("user", "note"))]
-async fn note_search_all_params_no_date(db: sqlx::Pool<sqlx::Sqlite>) {
+async fn note_search_lines(db: sqlx::Pool<sqlx::Sqlite>) {
     let server = setup_server(db);
 
     let token = test::login(&server).await;
@@ -118,31 +114,6 @@ async fn note_search_all_params_no_date(db: sqlx::Pool<sqlx::Sqlite>) {
         .post("/note/search")
         .authorization_bearer(token)
         .json(&json!({
-                "term": "note",
-                "tag": ["tag1", "tag2"],
-                "lines": 2
-        }))
-        .await;
-
-    response.assert_status_ok();
-
-    let json = response.json::<Vec<Note>>();
-
-    assert_eq!(1, json.len());
-    assert_eq!(5, json[0].id);
-}
-
-#[sqlx::test(fixtures("user", "note"))]
-async fn note_search_all_params_no_date_no_term(db: sqlx::Pool<sqlx::Sqlite>) {
-    let server = setup_server(db);
-
-    let token = test::login(&server).await;
-
-    let response = server
-        .post("/note/search")
-        .authorization_bearer(token)
-        .json(&json!({
-                "tag": ["tag1", "tag2"],
                 "lines": 2
         }))
         .await;
@@ -152,4 +123,62 @@ async fn note_search_all_params_no_date_no_term(db: sqlx::Pool<sqlx::Sqlite>) {
     let json = response.json::<Vec<Note>>();
 
     assert_eq!(5, json.len());
+}
+
+#[sqlx::test(fixtures("user", "note"))]
+async fn note_search_tag(db: sqlx::Pool<sqlx::Sqlite>) {
+    let server = setup_server(db);
+
+    let token = test::login(&server).await;
+
+    let response = server
+        .post("/note/search")
+        .authorization_bearer(token.clone())
+        .json(&json!({
+            "tag": ["tag1"]
+        }))
+        .await;
+
+    response.assert_status_ok();
+
+    let json = response.json::<Vec<Note>>();
+
+    assert_eq!(2, json.len());
+    assert_eq!(1, json[0].id);
+    assert_eq!(3, json[1].id);
+
+    let response = server
+        .post("/note/search")
+        .authorization_bearer(token)
+        .json(&json!({
+            "tag": ["tag2" ,"tag1"]
+        }))
+        .await;
+
+    response.assert_status_ok();
+
+    let json = response.json::<Vec<Note>>();
+
+    assert_eq!(1, json.len());
+    assert_eq!(1, json[0].id);
+}
+
+#[sqlx::test(fixtures("user", "note"))]
+async fn note_search_term(db: sqlx::Pool<sqlx::Sqlite>) {
+    let server = setup_server(db);
+
+    let token = test::login(&server).await;
+
+    let response = server
+        .post("/note/search")
+        .authorization_bearer(token.clone())
+        .json(&json!({
+            "term": "note"
+        }))
+        .await;
+
+    let json = response.json::<Vec<Note>>();
+
+    assert_eq!(1, json.len());
+    assert_eq!(5, json[0].id);
 }
