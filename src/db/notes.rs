@@ -147,11 +147,10 @@ pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Not
     // Add order by
     query.push_str(" ORDER BY created_at DESC");
 
-    // Limit preview lines if specified
-    // if let Some(lines) = params.lines {
-    //     query.push_str(" LIMIT ?");
-    //     args.push(lines.to_string());
-    // }
+    if let Some(limit) = params.limit {
+        query.push_str(" LIMIT ?");
+        args.push(limit.to_string());
+    }
 
     // Build and execute the query
     let mut db_query = sqlx::query_as::<Sqlite, NoteEntity>(&query);

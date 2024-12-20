@@ -208,9 +208,14 @@ pub async fn post_search(
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct NoteSearchRequest {
+    // Optional search term
     pub term: Option<String>,
+    // List of tags to filter by
     pub tag: Vec<String>,
+    // Optional start date for filtering
     pub date: Option<String>,
+    // Maximum number of results to return
+    pub limit: Option<i64>,
 }
 
 pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
