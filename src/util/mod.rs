@@ -25,3 +25,24 @@ impl JsonSchema for DateTimeWrapper {
         Schema::Object(schema)
     }
 }
+
+// First, create a wrapper type for DateTime<Utc>
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DateWrapper(pub chrono::NaiveDate);
+
+// Implement JsonSchema for the wrapper
+impl JsonSchema for DateWrapper {
+    fn schema_name() -> String {
+        "Date".to_string()
+    }
+
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        let schema = SchemaObject {
+            instance_type: Some(InstanceType::String.into()),
+            format: Some("date".to_string()),
+            ..Default::default()
+        };
+
+        Schema::Object(schema)
+    }
+}

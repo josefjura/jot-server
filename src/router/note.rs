@@ -67,6 +67,7 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
+                    target_date: Some(Utc::now().date_naive()),
                 },
                 Note {
                     id: 1,
@@ -75,6 +76,7 @@ pub fn get_all_docs(op: TransformOperation) -> TransformOperation {
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
+                    target_date: Some(Utc::now().date_naive()),
                 },
             ])
         })
@@ -111,6 +113,7 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                     user_id: 1,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
+                    target_date: Some(Utc::now().date_naive()),
                 },
                 Note {
                     id: 1,
@@ -119,6 +122,7 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
                     user_id: 2,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
+                    target_date: Some(Utc::now().date_naive()),
                 },
             ])
         })
@@ -149,6 +153,7 @@ pub fn get_by_id_docs(op: TransformOperation) -> TransformOperation {
                 user_id: 1,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
+                target_date: Some(Utc::now().date_naive()),
             })
         })
         .response_with::<401, (), _>(|res| res.description("Not authenticated"))
@@ -184,6 +189,7 @@ pub fn create_docs(op: TransformOperation) -> TransformOperation {
                 user_id: 1,
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
+                target_date: Some(chrono::Utc::now().date_naive()),
             })
         })
         .response_with::<500, (), _>(|res| {
@@ -232,6 +238,7 @@ pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
                         user_id: 1,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),
+                        target_date: Some(chrono::Utc::now().date_naive()),
                     },
                     Note {
                         id: 2,
@@ -240,6 +247,7 @@ pub fn post_search_docs(op: TransformOperation) -> TransformOperation {
                         user_id: 2,
                         created_at: chrono::Utc::now(),
                         updated_at: chrono::Utc::now(),
+                        target_date: Some(chrono::Utc::now().date_naive()),
                     },
                 ])
         })

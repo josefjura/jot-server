@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{errors::DateFilterError, util::DateTimeWrapper};
+use crate::{errors::DateFilterError, util::DateTimeWrapper, util::DateWrapper};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,8 @@ pub struct Note {
     pub created_at: chrono::DateTime<chrono::Utc>,
     #[schemars(with = "DateTimeWrapper")]
     pub updated_at: chrono::DateTime<chrono::Utc>,
+    #[schemars(with = "DateWrapper")]
+    pub target_date: Option<NaiveDate>,
 }
 
 #[derive(Debug, FromRow)]
@@ -24,6 +26,7 @@ pub struct NoteEntity {
     pub content: String,
     pub tags: String,
     pub user_id: i64,
+    pub target_date: Option<NaiveDate>,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }
@@ -42,11 +45,14 @@ impl TryFrom<NoteEntity> for Note {
             .map(|dt| DateTime::from_naive_utc_and_offset(dt, Utc))
             .ok_or("updated_at timestamp is missing".to_string())?;
 
+        let target_date = val.target_date;
+
         Ok(Note {
             id: val.id,
             content: val.content,
             tags: val.tags.split(",").map(|s| s.to_string()).collect(),
             user_id: val.user_id,
+            target_date,
             created_at,
             updated_at,
         })
