@@ -5,7 +5,7 @@ use db::create_db_pool;
 use dotenvy::dotenv;
 use errors::ApplicationError;
 use router::setup_router;
-use std::env;
+use std::env::{self, args};
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -24,6 +24,17 @@ mod test;
 
 #[tokio::main]
 async fn main() -> Result<(), ApplicationError> {
+    let args = args().collect::<Vec<String>>();
+    if args.len() == 3 && args[1] == "hash" {
+        let password = args[2].clone();
+
+        let hashed = jwt::hash_password(&password)?;
+
+        println!("{}", hashed);
+
+        return Ok(());
+    }
+
     if let Err(e) = run().await {
         // Print the error using Display
         eprintln!("Error: {}", e);

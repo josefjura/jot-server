@@ -24,6 +24,9 @@ pub enum ApplicationError {
 
     #[error("Missing environment value: {1}")]
     EnvError(#[source] VarError, String),
+
+    #[error("Error while hashing password. Error: {0}")]
+    PasswordHashError(#[from] AuthError),
 }
 
 #[derive(Error, Debug)]
