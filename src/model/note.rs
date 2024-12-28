@@ -17,7 +17,7 @@ pub struct Note {
     #[schemars(with = "DateTimeWrapper")]
     pub updated_at: chrono::DateTime<chrono::Utc>,
     #[schemars(with = "DateWrapper")]
-    pub target_date: Option<NaiveDate>,
+    pub target_date: NaiveDate,
 }
 
 #[derive(Debug, FromRow)]
@@ -26,7 +26,7 @@ pub struct NoteEntity {
     pub content: String,
     pub tags: String,
     pub user_id: i64,
-    pub target_date: Option<NaiveDate>,
+    pub target_date: NaiveDate,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }
@@ -63,6 +63,8 @@ impl TryFrom<NoteEntity> for Note {
 pub struct CreateNoteRequest {
     pub content: String,
     pub tags: Vec<String>,
+    #[schemars(with = "DateWrapper")]
+    pub target_date: NaiveDate,
 }
 
 pub fn parse_date_filter(filter: &str) -> DateFilter {

@@ -69,12 +69,13 @@ pub async fn create(
 
     let id = sqlx::query!(
         r#"
-			INSERT INTO notes (content, tags, user_id)
-			VALUES (?, ?, ?)
+			INSERT INTO notes (content, tags, user_id, target_date)
+			VALUES (?, ?, ?, ?)
 		"#,
         note.content,
         tag_value,
-        user_id
+        user_id,
+        note.target_date
     )
     .execute(&db)
     .await
