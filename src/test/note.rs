@@ -1,4 +1,5 @@
 use axum::http::StatusCode;
+use chrono::{Local, NaiveDate, Utc};
 use serde_json::json;
 
 use crate::{
@@ -73,7 +74,8 @@ async fn note_create_ok(db: sqlx::Pool<sqlx::Sqlite>) {
         .authorization_bearer(token)
         .json(&json!({
                 "content": "Some note",
-                "tags": ["tag1", "tag2"]
+                "tags": ["tag1", "tag2"],
+                "target_date": "2024-01-01"
         }))
         .await;
 
@@ -82,6 +84,10 @@ async fn note_create_ok(db: sqlx::Pool<sqlx::Sqlite>) {
 
     assert_eq!(6, note.id);
     assert_eq!("Some note", note.content);
+    assert_eq!(
+        chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+        note.target_date
+    );
 }
 
 #[sqlx::test(fixtures("user", "note"))]
