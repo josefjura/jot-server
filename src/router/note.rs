@@ -1,6 +1,6 @@
 use aide::{
     axum::{
-        routing::{get_with, post_with},
+        routing::{delete_with, get_with, post_with},
         ApiRouter, IntoApiResponse,
     },
     transform::TransformOperation,
@@ -19,7 +19,7 @@ use crate::{
     db,
     errors::RestError,
     model::{
-        note::{CreateNoteRequest, Note},
+        note::{CreateNoteRequest, DeleteManyRequest, Note},
         user::User,
     },
     state::AppState,
@@ -33,8 +33,12 @@ pub fn note_routes(app_state: AppState) -> ApiRouter<AppState> {
             "/note",
             get_with(get_all, get_all_docs).post_with(create, create_docs),
         )
+        .api_route("/note/delete", delete_with(delete_many, delete_many_docs))
         .api_route("/note/search", post_with(post_search, post_search_docs))
-        .api_route("/note/:id", get_with(get_by_id, get_by_id_docs))
+        .api_route(
+            "/note/:id",
+            get_with(get_by_id, get_by_id_docs).delete_with(delete, delete_docs),
+        )
         .api_route(
             "/user/note",
             get_with(get_all_by_owner, get_all_by_owner_docs),
@@ -127,6 +131,60 @@ pub fn get_all_by_owner_docs(op: TransformOperation) -> TransformOperation {
             ])
         })
         .response_with::<401, (), _>(|res| res.description("Not authenticated"))
+}
+
+pub async fn delete(
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Path(id): Path<i64>,
+) -> impl IntoApiResponse {
+    let result = db::notes::delete(state.db, id, user.id).await.map_err(|e| {
+        tracing::error!("Failed to delete notes: {:?}", e);
+        RestError::Database(e)
+    });
+
+    match result {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => e.into_response(),
+    }
+}
+
+pub fn delete_docs(op: TransformOperation) -> TransformOperation {
+    op.summary("Delete note")
+        .description("Delete a note by its ID")
+        .tag("Note")
+        .response_with::<204, (), _>(|res| res.description("Note deleted successfully"))
+        .response_with::<500, (), _>(|res| {
+            res.description("Database error occurred while deleting note")
+        })
+}
+
+pub async fn delete_many(
+    State(state): State<AppState>,
+    Extension(user): Extension<User>,
+    Json(request): Json<DeleteManyRequest>,
+) -> impl IntoApiResponse {
+    let result = db::notes::delete_many(state.db, &request.ids, user.id)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to delete notes: {:?}", e);
+            RestError::Database(e)
+        });
+
+    match result {
+        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => e.into_response(),
+    }
+}
+
+pub fn delete_many_docs(op: TransformOperation) -> TransformOperation {
+    op.summary("Delete notes")
+        .description("Delete multiple notes by their IDs")
+        .tag("Note")
+        .response_with::<204, (), _>(|res| res.description("Notes deleted successfully"))
+        .response_with::<500, (), _>(|res| {
+            res.description("Database error occurred while deleting notes")
+        })
 }
 
 pub async fn get_by_id(Path(id): Path<i64>, State(state): State<AppState>) -> impl IntoApiResponse {

@@ -51,6 +51,8 @@ pub enum DbError {
     EntityMapping(String),
     #[error("Error creating note: {0}")]
     UnableToCreate(String),
+    #[error("Error while working with json: {0}")]
+    JsonError(#[from] serde_json::Error),
 }
 
 #[derive(Error, Debug, Clone)]

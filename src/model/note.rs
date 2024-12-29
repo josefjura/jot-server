@@ -124,3 +124,8 @@ impl FromStr for DateFilter {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct DeleteManyRequest {
+    pub ids: Vec<i64>,
+}

@@ -1,7 +1,7 @@
 use sqlx::{Sqlite, SqlitePool};
 
 use crate::{
-    errors::DbError,
+    errors::{self, DbError},
     model::note::{parse_date_filter, CreateNoteRequest, DateFilter, Note, NoteEntity},
     router::note::NoteSearchRequest,
 };
@@ -172,4 +172,30 @@ pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Not
         .into_iter()
         .map(|item| item.try_into().map_err(DbError::EntityMapping))
         .collect()
+}
+
+pub async fn delete_many(db: SqlitePool, ids: &[i64], user_id: i64) -> Result<(), DbError> {
+    let params = serde_json::to_string(&ids).map_err(errors::DbError::JsonError)?;
+
+    sqlx::query!(
+        "DELETE FROM notes WHERE id IN (SELECT value FROM json_each(?)) and user_id = ?",
+        params,
+        user_id
+    )
+    .execute(&db)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn delete(db: SqlitePool, id: i64, user_id: i64) -> Result<(), DbError> {
+    sqlx::query!(
+        "DELETE FROM notes WHERE id = ? and user_id = ?",
+        id,
+        user_id
+    )
+    .execute(&db)
+    .await?;
+
+    Ok(())
 }
