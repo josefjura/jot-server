@@ -67,65 +67,39 @@ pub struct CreateNoteRequest {
     pub target_date: NaiveDate,
 }
 
-pub fn parse_date_filter(filter: &str) -> DateFilter {
-    match filter.to_lowercase().as_str() {
-        "all" | "" => DateFilter::All,
-        "past" => DateFilter::Past,
-        "future" => DateFilter::Future,
-        "today" => DateFilter::Today,
-        "yesterday" => DateFilter::Yesterday,
-        "last week" => DateFilter::LastWeek,
-        "last month" => DateFilter::LastMonth,
-        "next week" => DateFilter::NextWeek,
-        "next month" => DateFilter::NextMonth,
-        _ => match NaiveDate::parse_from_str(filter, "%Y-%m-%d") {
-            Ok(dt) => DateFilter::Specific(dt),
-            Err(_) => DateFilter::All,
-        },
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Deserialize)]
-pub enum DateFilter {
-    All,
-    Past,
-    Future,
-    Today,
-    Yesterday,
-    LastWeek,
-    LastMonth,
-    NextWeek,
-    NextMonth,
-    Specific(NaiveDate),
-}
-
-impl FromStr for DateFilter {
-    type Err = DateFilterError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "all" | "" => Ok(Self::All),
-            "past" => Ok(Self::Past),
-            "future" => Ok(Self::Future),
-            "today" => Ok(Self::Today),
-            "yesterday" => Ok(Self::Yesterday),
-            "last week" => Ok(Self::LastWeek),
-            "last month" => Ok(Self::LastMonth),
-            "next week" => Ok(Self::NextWeek),
-            "next month" => Ok(Self::NextMonth),
-            _ => match NaiveDate::parse_from_str(s, "%Y-%m-%d") {
-                Ok(dt) => Ok(Self::Specific(dt)),
-                Err(e) => Err(DateFilterError::ParseError(format!(
-                    "Error while parsing '{}': {}",
-                    s.to_string(),
-                    e
-                ))),
-            },
-        }
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DeleteManyRequest {
     pub ids: Vec<i64>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct NoteSearchRequest {
+    // Optional search term
+    pub term: Option<String>,
+    // List of tags to filter by
+    pub tag: Vec<String>,
+    // Optional start date for filtering
+    #[serde(default)]
+    pub target_date: Option<DateFilter>,
+    // Optional start date for filtering
+    #[serde(default)]
+    pub created_at: Option<DateFilter>,
+    // Optional start date for filtering
+    #[serde(default)]
+    pub updated_at: Option<DateFilter>,
+    // Maximum number of results to return
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum DateFilter {
+    #[schemars(with = "DateWrapper")]
+    Single(NaiveDate),
+    Range {
+        #[schemars(with = "DateWrapper")]
+        from: Option<NaiveDate>,
+        #[schemars(with = "DateWrapper")]
+        until: Option<NaiveDate>,
+    },
 }

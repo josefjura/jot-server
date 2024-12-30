@@ -19,7 +19,7 @@ use crate::{
     db,
     errors::RestError,
     model::{
-        note::{CreateNoteRequest, DeleteManyRequest, Note},
+        note::{CreateNoteRequest, DeleteManyRequest, Note, NoteSearchRequest},
         user::User,
     },
     state::AppState,
@@ -222,6 +222,7 @@ pub async fn create(
     Extension(user): Extension<User>,
     Json(req): Json<CreateNoteRequest>,
 ) -> impl IntoApiResponse {
+    println!("Create note request: {:?}", req);
     let note = db::notes::create(state.db, user.id, req)
         .await
         .map_err(|e| {
@@ -268,18 +269,6 @@ pub async fn post_search(
         Ok(items) => Json(items).into_response(),
         Err(e) => e.into_response(),
     }
-}
-
-#[derive(Debug, Deserialize, JsonSchema)]
-pub struct NoteSearchRequest {
-    // Optional search term
-    pub term: Option<String>,
-    // List of tags to filter by
-    pub tag: Vec<String>,
-    // Optional start date for filtering
-    pub date: Option<String>,
-    // Maximum number of results to return
-    pub limit: Option<i64>,
 }
 
 pub fn post_search_docs(op: TransformOperation) -> TransformOperation {

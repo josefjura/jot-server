@@ -1,9 +1,8 @@
-use sqlx::{Sqlite, SqlitePool};
+use sqlx::{QueryBuilder, Sqlite, SqlitePool};
 
 use crate::{
     errors::{self, DbError},
-    model::note::{parse_date_filter, CreateNoteRequest, DateFilter, Note, NoteEntity},
-    router::note::NoteSearchRequest,
+    model::note::{CreateNoteRequest, DateFilter, Note, NoteEntity, NoteSearchRequest},
 };
 
 pub async fn get_all(db: SqlitePool) -> Result<Vec<Note>, DbError> {
@@ -93,85 +92,94 @@ pub async fn create(
 }
 
 pub async fn search(db: SqlitePool, params: NoteSearchRequest) -> Result<Vec<Note>, DbError> {
-    // Start with base query
-    let mut query = String::from("SELECT * FROM notes WHERE 1=1");
-    let mut args = Vec::new();
+    let mut query_builder = QueryBuilder::new("SELECT * FROM notes WHERE 1=1");
 
-    // Build query conditionally based on params
+    // Add search term if present
     if let Some(term) = params.term {
-        query.push_str(" AND content LIKE ?");
-        let search_term = format!("%{}%", term);
-        args.push(search_term);
+        query_builder
+            .push(" AND content LIKE ")
+            .push_bind(format!("%{}%", term));
     }
 
-    // Add tag filter (tags are comma separated)
-
+    // Add tags (if any)
     for tag in params.tag {
-        query.push_str(" AND tags LIKE ?");
-        args.push(format!("%{}%", tag));
+        query_builder
+            .push(" AND tags LIKE ")
+            .push_bind(format!("%{}%", tag));
     }
 
-    if let Some(date_filter) = params.date {
-        match parse_date_filter(&date_filter) {
-            DateFilter::Today => {
-                query.push_str(" AND DATE(created_at) = DATE('now')");
-            }
-            DateFilter::Yesterday => {
-                query.push_str(" AND DATE(created_at) = DATE('now', '-1 day')");
-            }
-            DateFilter::Past => {
-                query.push_str(" AND DATE(created_at) < DATE('now')");
-            }
-            DateFilter::Future => {
-                query.push_str(" AND DATE(created_at) > DATE('now')");
-            }
-            DateFilter::LastWeek => {
-                query.push_str(" AND DATE(created_at) > DATE('now', '-7 days')");
-            }
-            DateFilter::LastMonth => {
-                query.push_str(" AND DATE(created_at) > DATE('now', '-30 days')");
-            }
-            DateFilter::NextWeek => {
-                query.push_str(" AND DATE(created_at) < DATE('now', '+7 days')");
-            }
-            DateFilter::NextMonth => {
-                query.push_str(" AND DATE(created_at) < DATE('now', '+30 days')");
-            }
-            DateFilter::Specific(date) => {
-                query.push_str(" AND DATE(created_at) = ?");
-                args.push(date.to_string());
-            }
-            DateFilter::All => {}
-        }
+    // Add date filters
+    if let Some(date_filter) = params.target_date {
+        date_filter.apply_to_query(&mut query_builder, "target_date");
     }
 
-    // Add order by
-    query.push_str(" ORDER BY created_at DESC");
+    if let Some(date_filter) = params.created_at {
+        date_filter.apply_to_query(&mut query_builder, "created_at");
+    }
 
+    if let Some(date_filter) = params.updated_at {
+        date_filter.apply_to_query(&mut query_builder, "updated_at");
+    }
+
+    // Add ordering
+    query_builder.push(" ORDER BY created_at DESC");
+
+    // Add limit if present
     if let Some(limit) = params.limit {
-        query.push_str(" LIMIT ?");
-        args.push(limit.to_string());
+        query_builder.push(" LIMIT ").push_bind(limit);
     }
 
     // Build and execute the query
-    let mut db_query = sqlx::query_as::<Sqlite, NoteEntity>(&query);
-
-    // Bind all parameters
-    for arg in args {
-        db_query = db_query.bind(arg);
-    }
-
-    // Execute query
-    let items = db_query.fetch_all(&db).await.map_err(|e| {
-        tracing::error!("Failed to search notes: {:?}", e);
-        DbError::Unknown(e)
-    })?;
+    let items = query_builder
+        .build_query_as::<NoteEntity>()
+        .fetch_all(&db)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to search notes: {:?}", e);
+            DbError::Unknown(e)
+        })?;
 
     // Convert entities to domain objects
     items
         .into_iter()
         .map(|item| item.try_into().map_err(DbError::EntityMapping))
         .collect()
+}
+
+impl DateFilter {
+    pub fn apply_to_query(&self, query: &mut QueryBuilder<Sqlite>, field: &str) {
+        match self {
+            DateFilter::Single(date) => {
+                let next_day = *date + chrono::Duration::days(1);
+                query
+                    .push(" AND ")
+                    .push(field)
+                    .push(" >= ")
+                    .push_bind(*date)
+                    .push(" AND ")
+                    .push(field)
+                    .push(" < ")
+                    .push_bind(next_day);
+            }
+            DateFilter::Range { from, until } => {
+                if let Some(from_date) = from {
+                    query
+                        .push(" AND ")
+                        .push(field)
+                        .push(" >= ")
+                        .push_bind(*from_date);
+                }
+
+                if let Some(until_date) = until {
+                    query
+                        .push(" AND ")
+                        .push(field)
+                        .push(" <= ")
+                        .push_bind(*until_date);
+                }
+            }
+        }
+    }
 }
 
 pub async fn delete_many(db: SqlitePool, ids: &[i64], user_id: i64) -> Result<(), DbError> {
